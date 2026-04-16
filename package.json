@@ -1,0 +1,13 @@
+{
+  "name": "new-life-city-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "upload:cloudinary": "node scripts/upload-to-cloudinary.mjs"
+  },
+  "dependencies": {
+    "cloudinary": "^2.7.0",
+    "dotenv": "^16.6.0"
+  }
+}
+
