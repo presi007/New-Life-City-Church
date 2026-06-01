@@ -50,7 +50,7 @@
       if (!rel) return null;
 
       // Convert encoded paths and normalise gallery folders to match Cloudinary:
-      //   assets/Gallery1/..., Gallery2/..., Gallery3/...  ->  home/Gallery/...
+      //   assets/Gallery Website/..., Gallery1/2/3/...  ->  home/Gallery/...
       //   assets/Logo/...                                ->  home/Logo/...
       var decoded = rel;
       try {
@@ -60,7 +60,9 @@
       }
 
       // Normalise gallery folders into a single "Gallery" folder under the prefix.
-      if (decoded.indexOf("Gallery1/") === 0) {
+      if (decoded.indexOf("Gallery Website/") === 0) {
+        decoded = "Gallery/" + decoded.slice("Gallery Website/".length);
+      } else if (decoded.indexOf("Gallery1/") === 0) {
         decoded = "Gallery/" + decoded.slice("Gallery1/".length);
       } else if (decoded.indexOf("Gallery2/") === 0) {
         decoded = "Gallery/" + decoded.slice("Gallery2/".length);

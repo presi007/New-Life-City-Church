@@ -1,27 +1,30 @@
 (function () {
   "use strict";
 
+  var base = "../assets/Gallery%20Website/";
   var images = [
-    "../assets/Gallery/3.jpg",
-    "../assets/Gallery/10.jpg",
-    "../assets/Gallery/11.jpg",
-    "../assets/Gallery/12.jpg",
-    "../assets/Gallery/13.jpg",
-    "../assets/Gallery/15.jpg",
-    "../assets/Gallery/22.jpg",
-    "../assets/Gallery/32.jpg",
-    "../assets/Gallery/DSC01562.jpg",
-    "../assets/Gallery/DSC02525.jpg",
-    "../assets/Gallery/DSC02651.jpg",
-    "../assets/Gallery/DSC04255.jpg",
-    "../assets/Gallery/DSC04413.jpg",
-    "../assets/Gallery/DSC04488.jpg",
-    "../assets/Gallery/DSC05519.jpg",
-    "../assets/Gallery/DSC05523.jpg",
-    "../assets/Gallery/DSC06623.jpg",
-    "../assets/Gallery/DSC09905.jpg",
-    "../assets/Gallery/DSC09999.jpg",
-    "../assets/Gallery/pastorrandeep.jpg"
+    base + "2.jpg",
+    base + "3.jpg",
+    base + "4.jpg",
+    base + "5.jpg",
+    base + "6.jpg",
+    base + "7.jpg",
+    base + "8.jpg",
+    base + "9.jpg",
+    base + "10.jpg",
+    base + "11.jpg",
+    base + "12.jpg",
+    base + "13.jpg",
+    base + "14.jpg",
+    base + "15.jpg",
+    base + "16.jpg",
+    base + "17.jpg",
+    base + "18.jpg",
+    base + "19.jpg",
+    base + "20.jpg",
+    base + "21.jpg",
+    base + "Pastor%20Randeep.jpg",
+    base + "Pastor%20Anushree.jpg"
   ];
 
   var grid = document.getElementById("gallery-grid");
@@ -44,4 +47,3 @@
     grid.appendChild(btn);
   });
 })();
-
