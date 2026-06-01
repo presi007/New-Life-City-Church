@@ -358,11 +358,17 @@
     if (!lightbox) return;
 
     var img = lightbox.querySelector(".lightbox__img");
+    var stage = document.getElementById("lightbox-stage");
+    var counter = document.getElementById("lightbox-counter");
     var closeBtn = lightbox.querySelector(".lightbox__close");
     var prevBtn = lightbox.querySelector(".lightbox__prev");
     var nextBtn = lightbox.querySelector(".lightbox__next");
     var triggers = Array.prototype.slice.call(document.querySelectorAll("[data-lightbox]"));
+    var nav = document.querySelector(".nav");
+    var navToggle = document.querySelector(".nav-toggle");
+    var header = document.querySelector(".site-header");
     var currentIndex = 0;
+    var scrollY = 0;
 
     function itemSrc(btn) {
       var full = btn.getAttribute("data-full");
@@ -384,31 +390,81 @@
       return im ? im.getAttribute("alt") || "" : "";
     }
 
+    function updateCounter() {
+      if (!counter || !triggers.length) return;
+      counter.textContent = currentIndex + 1 + " / " + triggers.length;
+    }
+
+    function lockScroll() {
+      scrollY = window.scrollY || document.documentElement.scrollTop;
+      document.body.classList.add("is-lightbox-open");
+      document.body.style.top = "-" + scrollY + "px";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
+    }
+
+    function unlockScroll() {
+      document.body.classList.remove("is-lightbox-open");
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      var navOpen = nav && nav.classList.contains("is-open");
+      document.body.style.overflow = navOpen ? "hidden" : "";
+      window.scrollTo(0, scrollY);
+    }
+
+    function closeMobileNav() {
+      if (!nav || !nav.classList.contains("is-open")) return;
+      nav.classList.remove("is-open");
+      if (navToggle) navToggle.setAttribute("aria-expanded", "false");
+      if (header) header.classList.remove("nav-open");
+    }
+
     function showIndex(index) {
-      if (!triggers.length) return;
+      if (!img || !triggers.length) return;
       currentIndex = (index + triggers.length) % triggers.length;
       var btn = triggers[currentIndex];
+      img.classList.add("is-changing");
       img.dataset.localSrc = itemLocalSrc(btn) || "";
       img.src = itemSrc(btn);
       img.alt = itemAlt(btn);
+      updateCounter();
+      window.requestAnimationFrame(function () {
+        img.classList.remove("is-changing");
+      });
+    }
+
+    function goPrev() {
+      showIndex(currentIndex - 1);
+    }
+
+    function goNext() {
+      showIndex(currentIndex + 1);
     }
 
     function openAt(index) {
+      closeMobileNav();
       currentIndex = index;
       showIndex(currentIndex);
       lightbox.classList.add("is-open");
       lightbox.setAttribute("aria-hidden", "false");
-      document.body.style.overflow = "hidden";
-      requestAnimationFrame(function () {
-        img.focus();
-      });
+      lockScroll();
+      if (closeBtn) closeBtn.focus();
     }
 
     function close() {
       lightbox.classList.remove("is-open");
       lightbox.setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
-      img.removeAttribute("src");
+      unlockScroll();
+      if (img) img.removeAttribute("src");
+      if (counter) counter.textContent = "";
+    }
+
+    function onControlClick(e, action) {
+      e.preventDefault();
+      e.stopPropagation();
+      action();
     }
 
     // If Cloudinary 404s, fall back to the local asset URL.
@@ -417,9 +473,12 @@
         var local = img.dataset.localSrc || "";
         if (!local) return;
         var current = img.currentSrc || img.src || "";
-        // Only fall back when Cloudinary is the failing src.
         if (current.indexOf("https://res.cloudinary.com/") !== 0) return;
         img.src = local;
+      });
+
+      img.addEventListener("load", function () {
+        img.classList.remove("is-changing");
       });
     }
 
@@ -429,17 +488,25 @@
       });
     });
 
-    if (closeBtn) closeBtn.addEventListener("click", close);
+    if (closeBtn) closeBtn.addEventListener("click", function (e) {
+      onControlClick(e, close);
+    });
     if (prevBtn)
-      prevBtn.addEventListener("click", function () {
-        showIndex(currentIndex - 1);
+      prevBtn.addEventListener("click", function (e) {
+        onControlClick(e, goPrev);
       });
     if (nextBtn)
-      nextBtn.addEventListener("click", function () {
-        showIndex(currentIndex + 1);
+      nextBtn.addEventListener("click", function (e) {
+        onControlClick(e, goNext);
       });
 
+    var suppressCloseClick = false;
+
     lightbox.addEventListener("click", function (e) {
+      if (suppressCloseClick) {
+        suppressCloseClick = false;
+        return;
+      }
       if (e.target === lightbox) close();
     });
 
@@ -448,12 +515,63 @@
       if (e.key === "Escape") close();
       else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        showIndex(currentIndex - 1);
+        goPrev();
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        showIndex(currentIndex + 1);
+        goNext();
       }
     });
+
+    function initLightboxSwipe(surface) {
+      if (!surface) return;
+      var startX = 0;
+      var startY = 0;
+      var tracking = false;
+      var SWIPE_MIN = 48;
+
+      surface.addEventListener(
+        "touchstart",
+        function (e) {
+          if (!lightbox.classList.contains("is-open") || e.touches.length !== 1) return;
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          tracking = true;
+        },
+        { passive: true }
+      );
+
+      surface.addEventListener(
+        "touchmove",
+        function (e) {
+          if (!tracking || e.touches.length !== 1) return;
+          var dx = e.touches[0].clientX - startX;
+          var dy = e.touches[0].clientY - startY;
+          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 12) {
+            e.preventDefault();
+          }
+        },
+        { passive: false }
+      );
+
+      surface.addEventListener(
+        "touchend",
+        function (e) {
+          if (!tracking) return;
+          tracking = false;
+          var touch = e.changedTouches[0];
+          if (!touch) return;
+          var dx = touch.clientX - startX;
+          var dy = touch.clientY - startY;
+          if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) < Math.abs(dy)) return;
+          suppressCloseClick = true;
+          if (dx < 0) goNext();
+          else goPrev();
+        },
+        { passive: true }
+      );
+    }
+
+    initLightboxSwipe(stage || lightbox);
   }
 
   function initContactForm() {
